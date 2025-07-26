@@ -73,7 +73,7 @@ app.use('/api/stripe/webhook', require('./routers/stripeWebhook'));
 app.use('/api/audit', require('./routers/audit'));
 
 // FIX: Case-sensitive route import
-app.use('/api/verification', require('./routers/verification'));
+app.use('/api/verification', require('./routers/Verification'));
 
 // Stripe example endpoint
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
