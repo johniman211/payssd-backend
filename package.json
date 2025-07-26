@@ -1,0 +1,41 @@
+{
+  "name": "southpay-backend",
+  "version": "1.0.0",
+  "description": "Backend for SouthPay",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "africastalking": "^0.7.3",
+    "axios": "^1.10.0",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "marked": "^16.0.0",
+    "mongoose": "^8.16.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.4",
+    "slugify": "^1.6.6",
+    "socket.io": "^4.8.1",
+    "stripe": "^18.3.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "nodemon": "^3.0.2",
+    "prettier": "^3.3.3"
+  }
+}
