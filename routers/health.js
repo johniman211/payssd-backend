@@ -1,13 +1,15 @@
 const express = require('express');
 const os = require('os');
+const mongoose = require('mongoose');
 const router = express.Router();
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const memoryUsage = process.memoryUsage();
   const cpuLoad = os.loadavg(); // [1min, 5min, 15min averages]
   const uptime = process.uptime();
 
   const checks = {
+    database: mongoose.connection.readyState === 1,
     stripe: !!process.env.STRIPE_SECRET_KEY,
     momo: !!(process.env.MOMO_API_KEY && process.env.MOMO_API_URL && process.env.MOMO_USER),
     pay: !!(process.env.MTN_API_KEY && process.env.ZAIN_API_KEY),
@@ -19,11 +21,14 @@ router.get('/', (req, res) => {
       process.env.SMTP_PASS &&
       process.env.EMAIL_FROM
     ),
-    database: !!process.env.MONGODB_URI,
   };
 
-  res.json({
-    status: 'ok',
+  const healthy =
+    checks.database &&
+    checks.email; // mark unhealthy if DB or email config is missing (adjust as needed)
+
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'ok' : 'degraded',
     timestamp: new Date(),
     uptime: `${Math.floor(uptime)}s`,
     server: {
