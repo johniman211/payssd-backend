@@ -75,6 +75,7 @@ app.use('/api/stats', require('./routers/stats'));
 app.use('/api/sandbox', require('./routers/sandbox'));
 app.use('/api/stripe/webhook', require('./routers/stripeWebhook'));
 app.use('/api/audit', require('./routers/audit'));
+app.use('/health', require('./routers/health'));
 
 // ✅ Safe loading of verification route
 try {
