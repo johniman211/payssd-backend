@@ -5,11 +5,8 @@ const requiredEnv = ['MOMO_API_KEY', 'MOMO_API_URL', 'MOMO_USER'];
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
 
 if (missingEnv.length > 0) {
-  console.error(
-    `⚠️ MoMo environment variables missing: ${missingEnv.join(', ')}. MoMo routes are disabled.`
-  );
+  console.error(`⚠️ MoMo env vars missing: ${missingEnv.join(', ')}. MoMo routes disabled.`);
 
-  // Return a friendly error for all MoMo routes
   router.all('*', (req, res) =>
     res.status(503).json({
       success: false,
@@ -20,7 +17,6 @@ if (missingEnv.length > 0) {
 } else {
   const { requestToPay } = require('../utils/momo');
 
-  // MoMo payment endpoint
   router.post('/pay', async (req, res) => {
     const {
       phone,
@@ -31,13 +27,7 @@ if (missingEnv.length > 0) {
     } = req.body;
 
     try {
-      const refId = await requestToPay(
-        phone,
-        amount,
-        currency,
-        externalId,
-        payerMessage
-      );
+      const refId = await requestToPay(phone, amount, currency, externalId, payerMessage);
       res.json({ success: true, referenceId: refId });
     } catch (err) {
       console.error('MoMo error:', err.response?.data || err.message);

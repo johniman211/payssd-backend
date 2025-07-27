@@ -6,16 +6,14 @@ const stripeKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeKey) {
   console.error('⚠️ STRIPE_SECRET_KEY is not set. Stripe endpoints are disabled.');
 
-  // Return a clear error for all stripe routes if no key
-  router.all('*', (req, res) => {
-    return res.status(503).json({
-      message: 'Stripe integration is disabled. Missing STRIPE_SECRET_KEY.',
-    });
-  });
+  router.all('*', (req, res) =>
+    res.status(503).json({
+      message: 'Stripe integration disabled. Missing STRIPE_SECRET_KEY.',
+    })
+  );
 } else {
   const stripe = require('stripe')(stripeKey);
 
-  // Example route: create a payment intent
   router.post('/create-payment-intent', async (req, res) => {
     try {
       const { amount, currency = 'usd' } = req.body;
