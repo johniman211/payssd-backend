@@ -2,7 +2,8 @@
 
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
+
 
 // ✅ Simulate test payment (already added above)
 router.post('/test/payment', (req, res) => {
