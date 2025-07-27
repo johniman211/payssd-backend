@@ -1,16 +1,12 @@
+// index.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const mongoose = require('mongoose');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
-
-// Debug: list router files at startup
-const routersPath = path.join(__dirname, 'routers');
-console.log('Routers files on server:', fs.readdirSync(routersPath));
 
 // Security middleware
 app.use(helmet());
@@ -75,33 +71,36 @@ app.use('/api/stats', require('./routers/stats'));
 app.use('/api/sandbox', require('./routers/sandbox'));
 app.use('/api/stripe/webhook', require('./routers/stripeWebhook'));
 app.use('/api/audit', require('./routers/audit'));
+app.use('/api/verification', require('./routers/verification'));
 app.use('/health', require('./routers/health'));
 
-// ✅ Safe loading of verification route
-try {
-  app.use('/api/verification', require('./routers/verification'));
-  console.log('✅ Verification route loaded');
-} catch (err) {
-  console.error('⚠️ Could not load verification route:', err.message);
+// --- Stripe /charge endpoint with safety check --- //
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn('⚠️ STRIPE_SECRET_KEY not set. /api/charge endpoint disabled.');
+  app.all('/api/charge', (req, res) =>
+    res
+      .status(503)
+      .json({ message: 'Stripe charge endpoint disabled. Missing STRIPE_SECRET_KEY.' })
+  );
+} else {
+  const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+  app.post('/api/charge', async (req, res) => {
+    try {
+      const { amount, source } = req.body;
+      const charge = await stripe.charges.create({
+        amount,
+        currency: 'usd',
+        source,
+        description: 'Test charge',
+      });
+      res.json(charge);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 }
 
-// Stripe example endpoint
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-app.post('/api/charge', async (req, res) => {
-  try {
-    const { amount, source } = req.body;
-    const charge = await stripe.charges.create({
-      amount,
-      currency: 'usd',
-      source,
-      description: 'Test charge',
-    });
-    res.json(charge);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Start server
+// --- Start server --- //
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
