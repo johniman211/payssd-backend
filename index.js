@@ -9,7 +9,8 @@ const fs = require('fs');
 const app = express();
 
 // Debug: list router files at startup
-console.log('Routers files on server:', fs.readdirSync(path.join(__dirname, 'routers')));
+const routersPath = path.join(__dirname, 'routers');
+console.log('Routers files on server:', fs.readdirSync(routersPath));
 
 // Security middleware
 app.use(helmet());
@@ -75,8 +76,13 @@ app.use('/api/sandbox', require('./routers/sandbox'));
 app.use('/api/stripe/webhook', require('./routers/stripeWebhook'));
 app.use('/api/audit', require('./routers/audit'));
 
-// FIX: Case-sensitive route import
-app.use('/api/verification', require('./routers/verification'));
+// ✅ Safe loading of verification route
+try {
+  app.use('/api/verification', require('./routers/verification'));
+  console.log('✅ Verification route loaded');
+} catch (err) {
+  console.error('⚠️ Could not load verification route:', err.message);
+}
 
 // Stripe example endpoint
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
