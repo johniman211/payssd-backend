@@ -1,45 +1,46 @@
 const express = require('express');
 const router = express.Router();
-const Stripe = require('stripe');
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-const Payment = require('../models/Payment'); // create this model below
-const sendEmail = require('../utils/sendEmail'); // uses nodemailer
+const stripeKey = process.env.STRIPE_SECRET_KEY;
 
-router.post('/webhook', async (req, res) => {
-  const sig = req.headers['stripe-signature'];
+if (!stripeKey) {
+  console.error('⚠️ STRIPE_SECRET_KEY not set. Stripe Webhook disabled.');
 
-  let event;
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-  } catch (err) {
-    console.error('⚠️ Webhook Error:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+  router.all('*', (req, res) =>
+    res.status(503).json({
+      message: 'Stripe webhook disabled. Missing STRIPE_SECRET_KEY.',
+    })
+  );
+} else {
+  const stripe = require('stripe')(stripeKey);
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const { amount_total, customer_email, metadata } = session;
+  // Example webhook endpoint
+  router.post('/', express.raw({ type: 'application/json' }), (req, res) => {
+    const sig = req.headers['stripe-signature'];
 
-    // 1. Save to DB
-    await Payment.create({
-      email: customer_email,
-      amount: amount_total / 100,
-      method: 'card',
-      ref: session.client_reference_id || 'N/A',
-      status: 'success',
-    });
+    try {
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
 
-    // 2. Email receipt
-    await sendEmail({
-      to: customer_email,
-      subject: 'Your PaySSD Payment Receipt',
-      html: `<p>Thank you for your payment of $${amount_total / 100}.</p><p>Reference: ${session.client_reference_id}</p>`,
-    });
-  }
+      // Handle event type
+      switch (event.type) {
+        case 'payment_intent.succeeded':
+          console.log('Payment successful:', event.data.object.id);
+          break;
+        // add more event types as needed
+        default:
+          console.log(`Unhandled event type ${event.type}`);
+      }
 
-  res.json({ received: true });
-});
+      res.json({ received: true });
+    } catch (err) {
+      console.error('Stripe webhook error:', err.message);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  });
+}
 
 module.exports = router;
