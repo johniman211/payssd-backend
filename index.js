@@ -1,12 +1,15 @@
-// index.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const mongoose = require('mongoose');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
+
+// Debug: list router files at startup
+console.log('Routers files on server:', fs.readdirSync(path.join(__dirname, 'routers')));
 
 // Security middleware
 app.use(helmet());
