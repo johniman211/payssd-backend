@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth'); // ✅ fixed import
 
-const Setting = require('../models/Setting'); // You’ll create this model
+const Setting = require('../models/Setting');
 
-router.post('/update', auth, async (req, res) => {
+// ✅ Update settings route (protected)
+router.post('/update', authMiddleware, async (req, res) => {
   try {
     const { smtp, payoutLimit, password } = req.body;
 
-    // Only one settings doc, or upsert
     await Setting.findOneAndUpdate(
       {},
       { smtp, payoutLimit, password },
-      { upsert: true, new: true },
+      { upsert: true, new: true }
     );
 
     res.json({ message: 'Settings saved successfully' });
